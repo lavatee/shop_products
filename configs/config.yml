@@ -1,0 +1,16 @@
+port: "8001"
+orders:
+  host: "localhost"
+  port: "8002"
+reviews:
+  host: "localhost"
+  port: "8003"
+saved:
+  host: "localhost"
+  port: "8004"
+db:
+  host: "localhost"
+  port: "5432"
+  username: "postgres"
+  dbname: "postgres"
+  sslmode: "disable"
