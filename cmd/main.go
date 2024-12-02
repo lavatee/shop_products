@@ -18,14 +18,14 @@ import (
 
 func main() {
 	if err := InitConfig(); err != nil {
-		log.Fatalf("config error", err.Error())
+		log.Fatalf("config error: %s", err.Error())
 	}
 	if err := gotenv.Load(); err != nil {
-		log.Fatalf("env error", err.Error())
+		log.Fatalf("env error: %s", err.Error())
 	}
 	db, err := repository.NewPostgresDB(viper.GetString("db.host"), viper.GetString("db.port"), viper.GetString("db.username"), os.Getenv("DB_PASSWORD"), viper.GetString("db.dbname"), viper.GetString("db.sslmode"))
 	if err != nil {
-		log.Fatalf("db error", err.Error())
+		log.Fatalf("db error: %s", err.Error())
 	}
 	repo := repository.NewRepository(db)
 	services := service.NewService(repo)
@@ -35,7 +35,7 @@ func main() {
 	}
 	go func() {
 		if err := srv.Run(viper.GetString("port"), end); err != nil {
-			log.Fatalf("run error", err.Error())
+			log.Fatalf("run error: %s", err.Error())
 		}
 	}()
 
@@ -44,7 +44,7 @@ func main() {
 	<-quit
 	srv.Shutdown()
 	if err := db.Close(); err != nil {
-		log.Fatalf("close db error", err.Error())
+		log.Fatalf("close db error: %s", err.Error())
 	}
 }
 

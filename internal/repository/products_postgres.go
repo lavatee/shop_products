@@ -77,9 +77,3 @@ func (r *ProductsPostgres) GetOneProduct(id int) (products.Product, error) {
 	err := r.db.Get(&product, query, id)
 	return product, err
 }
-
-func (r *ProductsPostgres) PostOrder(productId int) error {
-	query := fmt.Sprintf("UPDATE %s SET amount=amount-1 WHERE id=$1", productsTable)
-	_, err := r.db.Exec(query, productId)
-	return err
-}

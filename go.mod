@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/lavatee/shop_protos v0.0.0-20240922045745-f9b516adef77 // indirect
+	github.com/lavatee/shop_protos v0.0.0-20241202154729-22c0acd96b6c // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

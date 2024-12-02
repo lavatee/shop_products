@@ -3,8 +3,6 @@ package endpoint
 import (
 	"context"
 
-	products "github.com/lavatee/shop_products"
-	"github.com/lavatee/shop_products/internal/service"
 	pb "github.com/lavatee/shop_protos/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -12,134 +10,119 @@ import (
 
 func (e *Endpoint) PostProduct(c context.Context, req *pb.PostProductRequest) (*pb.PostProductResponse, error) {
 	if req.Amount == 0 {
-		return nil, status.Error(codes.InvalidArgument, "amount can't be 0")
+		return nil, status.Error(codes.InvalidArgument, "the request must have amount")
 	}
 	if req.Price == 0 {
-		return nil, status.Error(codes.InvalidArgument, "price can't be 0")
+		return nil, status.Error(codes.InvalidArgument, "the request must have price")
 	}
 	if req.Name == "" || req.Category == "" || req.Description == "" {
 		return nil, status.Error(codes.InvalidArgument, "enter all fields")
 	}
-	producer := PostProductProducer{
-		Services:  e.Services,
-		Observers: []PostProductObserver{},
-	}
-	event := producer.Produce(req.Name, int(req.Amount), int(req.Price), req.Category, req.Description, int(req.UserId))
-	if !event.IsOk {
-		return nil, status.Error(codes.Internal, event.Error)
+	productId, err := e.Services.Products.PostProduct(req.Name, int(req.Amount), int(req.Price), req.Category, req.Description, int(req.UserId))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &pb.PostProductResponse{
-		Id: int64(event.Id),
+		Id: int64(productId),
 	}, nil
-}
-
-type PostProductEvent struct {
-	Name        string
-	Amount      int
-	Price       int
-	Category    string
-	Description string
-	Id          int
-	UserId      int
-	IsOk        bool
-	Error       string
-}
-
-type PostProductProducer struct {
-	Observers []PostProductObserver
-	Services  *service.Service
-}
-
-type PostProductObserver interface {
-	Update(event *PostProductEvent)
-}
-
-func (p PostProductProducer) Produce(name string, amount int, price int, category string, description string, userId int) PostProductEvent {
-	id, err := p.Services.PostProduct(name, amount, price, category, description, userId)
-	if err != nil {
-		return PostProductEvent{IsOk: false, Error: err.Error()}
-	}
-	event := PostProductEvent{
-		Name:        name,
-		Amount:      amount,
-		Price:       price,
-		Category:    category,
-		Description: description,
-		UserId:      userId,
-		Id:          id,
-		IsOk:        true,
-	}
-	for _, observer := range p.Observers {
-		observer.Update(&event)
-		if !event.IsOk {
-			return event
-		}
-	}
-	return event
 }
 
 func (e *Endpoint) GetProducts(c context.Context, req *pb.GetProductsRequest) (*pb.GetProductsResponse, error) {
 	if req.ProductCategory == "" {
-		return nil, status.Error(codes.InvalidArgument, "category is required")
+		return nil, status.Error(codes.InvalidArgument, "the request must have category")
 	}
-	producer := GetProductsProducer{
-		Services:  e.Services,
-		Observers: []GetProductObserver{},
+	products, err := e.Services.Products.GetProducts(req.ProductCategory)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-	event := producer.Produce(req.ProductCategory)
-	if !event.IsOk {
-		return nil, status.Error(codes.Internal, event.Error)
+	pbProducts := make([]*pb.Product, len(products))
+	for i, product := range products {
+		pbProducts[i] = &pb.Product{
+			Id:          int64(product.Id),
+			UserId:      int64(product.UserId),
+			Amount:      int64(product.Amount),
+			Price:       int64(product.Price),
+			Category:    product.Category,
+			Name:        product.Name,
+			Description: product.Description,
+		}
 	}
 	return &pb.GetProductsResponse{
-		Products: event.GRPCProducts,
+		Products: pbProducts,
 	}, nil
 }
 
-type GetProductsEvent struct {
-	Category     string
-	Products     []products.Product
-	GRPCProducts []*pb.Product
-	IsOk         bool
-	Error        string
-}
-
-type GetProductsProducer struct {
-	Observers []GetProductObserver
-	Services  *service.Service
-}
-
-type GetProductObserver interface {
-	Update(event *GetProductsEvent)
-}
-
-func (p GetProductsProducer) Produce(category string) GetProductsEvent {
-	products, err := p.Services.GetProducts(category)
-	if err != nil {
-		return GetProductsEvent{IsOk: false, Error: err.Error()}
+func (e *Endpoint) GetUserProducts(c context.Context, req *pb.GetUserProductsRequest) (*pb.GetUserProductsResponse, error) {
+	if req.UserId == 0 {
+		return nil, status.Error(codes.InvalidArgument, "the request must have user's id")
 	}
-	gRPCProducts := make([]*pb.Product, len(products))
+	products, err := e.Services.Products.GetUserProducts(int(req.UserId))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	pbProducts := make([]*pb.Product, len(products))
 	for i, product := range products {
-		gRPCProducts[i] = &pb.Product{
+		pbProducts[i] = &pb.Product{
 			Id:          int64(product.Id),
 			UserId:      int64(product.UserId),
-			Price:       int64(product.Price),
 			Amount:      int64(product.Amount),
+			Price:       int64(product.Price),
+			Category:    product.Category,
 			Name:        product.Name,
 			Description: product.Description,
+		}
+	}
+	return &pb.GetUserProductsResponse{
+		Products: pbProducts,
+	}, nil
+}
+
+func (e *Endpoint) GetOneProduct(c context.Context, req *pb.GetOneProductRequest) (*pb.GetOneProductResponse, error) {
+	if req.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "the request must have id")
+	}
+	product, err := e.Services.Products.GetOneProduct(int(req.Id))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &pb.GetOneProductResponse{
+		Product: &pb.Product{
+			Id:          int64(product.Id),
+			UserId:      int64(product.UserId),
+			Amount:      int64(product.Amount),
+			Price:       int64(product.Price),
 			Category:    product.Category,
+			Name:        product.Name,
+			Description: product.Description,
+		},
+	}, nil
+}
+
+func (e *Endpoint) GetSavedProducts(c context.Context, req *pb.GetSavedProductsRequest) (*pb.GetSavedProductResponse, error) {
+	if len(req.ProductsId) == 0 || req.ProductsId == nil {
+		return nil, status.Error(codes.InvalidArgument, "the request must have ids")
+	}
+	ids := make([]int, len(req.ProductsId))
+	for i, id := range req.ProductsId {
+		ids[i] = int(id)
+	}
+	products, err := e.Services.Products.GetSavedProducts(ids)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	pbProducts := make([]*pb.Product, len(products))
+	for i, product := range products {
+		pbProducts[i] = &pb.Product{
+			Id:          int64(product.Id),
+			UserId:      int64(product.UserId),
+			Amount:      int64(product.Amount),
+			Price:       int64(product.Price),
+			Category:    product.Category,
+			Name:        product.Name,
+			Description: product.Description,
 		}
 	}
-	event := GetProductsEvent{
-		Products:     products,
-		GRPCProducts: gRPCProducts,
-		Category:     category,
-		IsOk:         true,
-	}
-	for _, observer := range p.Observers {
-		observer.Update(&event)
-		if !event.IsOk {
-			return event
-		}
-	}
-	return event
+	return &pb.GetSavedProductResponse{
+		Products: pbProducts,
+	}, nil
 }

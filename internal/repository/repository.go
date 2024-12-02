@@ -16,7 +16,6 @@ type Products interface {
 	GetUserProducts(userId int) ([]products.Product, error)
 	GetSavedProducts(ids []int) ([]products.Product, error)
 	GetOneProduct(id int) (products.Product, error)
-	PostOrder(productId int) error
 }
 
 func NewRepository(db *sqlx.DB) *Repository {

@@ -13,6 +13,10 @@ github.com/lavatee/shop_protos v0.0.0-20240919144806-8ac78456c7f4 h1:wzQ9tGmYq3j
 github.com/lavatee/shop_protos v0.0.0-20240919144806-8ac78456c7f4/go.mod h1:UPxgv1pWIcyXglrsOiKT5QkL5q0TfJy6P9utji1RzFs=
 github.com/lavatee/shop_protos v0.0.0-20240922045745-f9b516adef77 h1:8YuZ/wlnvHr0tO2+I6fsUQ2tzLZpiUjcc0iZ4gxxmw0=
 github.com/lavatee/shop_protos v0.0.0-20240922045745-f9b516adef77/go.mod h1:UPxgv1pWIcyXglrsOiKT5QkL5q0TfJy6P9utji1RzFs=
+github.com/lavatee/shop_protos v0.0.0-20241125133113-f70bc65735c2 h1:QMsYz09fwpF2pitc/9UO3OHRHXRvsAzjEoDotZKwGW0=
+github.com/lavatee/shop_protos v0.0.0-20241125133113-f70bc65735c2/go.mod h1:UPxgv1pWIcyXglrsOiKT5QkL5q0TfJy6P9utji1RzFs=
+github.com/lavatee/shop_protos v0.0.0-20241202154729-22c0acd96b6c h1:jZhxChNfn/4i+x7PkC+7DDxqHZWX3sIAPstD0q8+3Hg=
+github.com/lavatee/shop_protos v0.0.0-20241202154729-22c0acd96b6c/go.mod h1:UPxgv1pWIcyXglrsOiKT5QkL5q0TfJy6P9utji1RzFs=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/magiconair/properties v1.8.7 h1:IeQXZAiQcpL9mgcAe1Nu6cX9LLw6ExEHKjN0VQdvPDY=
