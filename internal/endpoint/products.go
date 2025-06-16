@@ -2,8 +2,11 @@ package endpoint
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/lavatee/shop_products/internal/service"
 	pb "github.com/lavatee/shop_protos/gen"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -125,4 +128,50 @@ func (e *Endpoint) GetSavedProducts(c context.Context, req *pb.GetSavedProductsR
 	return &pb.GetSavedProductResponse{
 		Products: pbProducts,
 	}, nil
+}
+
+func (e *Endpoint) ConsumePostDeleteProductEvent(data []byte) error {
+	var event service.PostDeleteProductEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		logrus.Errorf("Error in ConsumePostDeleteProductEvent: %s", err.Error())
+		return err
+	}
+	if err := e.Services.Products.PostDeleteProductEvent(event.EventId, event.EventInfo.ProductId, event.EventInfo.ProductCreator); err != nil {
+		logrus.Errorf("Error in ConsumePostDeleteProductEvent: %s", err.Error())
+		return err
+	}
+	logrus.Infof("Event with id '%s' was consumed successfully!", event.EventId)
+	return nil
+}
+
+func (e *Endpoint) ConsumeCompensateDeleteProductEvent(data []byte) error {
+	var event service.CompensateDeleteProductEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		logrus.Errorf("Error in ConsumeCompensateDeleteProductEvent: %s", err.Error())
+		return err
+	}
+	if err := e.Services.Products.CompensateDeleteProductEvent(event.EventId, event.EventInfo.DeleteProductEventId); err != nil {
+		logrus.Errorf("Error in ConsumeCompensateDeleteProductEvent: %s", err.Error())
+		return err
+	}
+	logrus.Infof("Event with id '%s' was consumed successfully!", event.EventId)
+	return nil
+}
+
+func (e *Endpoint) ConsumeConfirmProductDeletingEvent(data []byte) error {
+	var event service.ConfirmProductDeletingEvent
+	if err := json.Unmarshal(data, &event); err != nil {
+		logrus.Errorf("Error in ConsumeConfirmProductDeletingEvent: %s", err.Error())
+		return err
+	}
+	if err := e.Services.Products.ConfirmProductDeleting(event.EventId, event.EventInfo.DeleteProductEventId); err != nil {
+		logrus.Errorf("Error in ConsumeConfirmProductDeletingEvent: %s", err.Error())
+		return err
+	}
+	logrus.Info("Event with id '%s' was consumed successfully!", event.EventId)
+	return nil
+}
+
+func (e *Endpoint) ConsumePostPostOrderEvent(data []byte) error {
+
 }

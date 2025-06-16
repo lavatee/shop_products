@@ -6,7 +6,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const productsTable = "products"
+const (
+	productsTable           = "products"
+	eventsTable             = "events"
+	compensatoryEventsTable = "compensatory_events"
+)
 
 func NewPostgresDB(host string, port string, username string, password string, dbname string, sslmode string) (*sqlx.DB, error) {
 	db, err := sqlx.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", host, port, username, password, dbname, sslmode))

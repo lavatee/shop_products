@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,31 +12,48 @@ import (
 	"github.com/lavatee/shop_products/internal/repository"
 	"github.com/lavatee/shop_products/internal/service"
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/subosito/gotenv"
 	"google.golang.org/grpc"
 )
 
 func main() {
+	logrus.SetFormatter(&logrus.JSONFormatter{PrettyPrint: true})
 	if err := InitConfig(); err != nil {
-		log.Fatalf("config error: %s", err.Error())
+		logrus.Fatalf("config error: %s", err.Error())
 	}
 	if err := gotenv.Load(); err != nil {
-		log.Fatalf("env error: %s", err.Error())
+		logrus.Fatalf("env error: %s", err.Error())
 	}
 	db, err := repository.NewPostgresDB(viper.GetString("db.host"), viper.GetString("db.port"), viper.GetString("db.username"), os.Getenv("DB_PASSWORD"), viper.GetString("db.dbname"), viper.GetString("db.sslmode"))
 	if err != nil {
-		log.Fatalf("db error: %s", err.Error())
+		logrus.Fatalf("db error: %s", err.Error())
 	}
-	repo := repository.NewRepository(db)
-	services := service.NewService(repo)
-	end := endpoint.NewEndpoint(services)
+	repo := repository.NewRepository(db, fmt.Sprintf("%s:%s", viper.GetString("redis.host"), viper.GetString("redis.port")))
+	mqChannel, err := service.ConnectRabbitMQ(viper.GetString("rabbitmq.host"), viper.GetString("rabbitmq.port"), viper.GetString("rabbitmq.user"), os.Getenv("RABBIT_PASSWORD"))
+	if err != nil {
+		logrus.Fatalf("connect rabbitmq error: %s", err.Error())
+	}
+	producer := service.NewRabbitMQProducer(mqChannel)
+	consumer := endpoint.NewRabbitMQConsumer(mqChannel)
+	services := service.NewService(repo, producer)
+	end := endpoint.NewEndpoint(services, consumer)
 	srv := &products.Server{
 		GRPCServer: grpc.NewServer(),
 	}
+	if err := end.Consumer.ConsumeQueue(service.PostDeleteProductEventQueue, end.ConsumePostDeleteProductEvent); err != nil {
+		logrus.Fatalf("consume %s error: %s", service.PostDeleteProductEventQueue, err.Error())
+	}
+	if err := end.Consumer.ConsumeQueue(service.CompensateDeleteProductEventQueue, end.ConsumeCompensateDeleteProductEvent); err != nil {
+		logrus.Fatalf("consume %s error: %s", service.CompensateDeleteProductEventQueue, err.Error())
+	}
+	if err := end.Consumer.ConsumeQueue(service.ConfirmProductDeletingQueue, end.ConsumeConfirmProductDeletingEvent); err != nil {
+		logrus.Fatalf("consume %s error: %s", service.ConfirmProductDeletingQueue, err.Error())
+	}
 	go func() {
 		if err := srv.Run(viper.GetString("port"), end); err != nil {
-			log.Fatalf("run error: %s", err.Error())
+			logrus.Fatalf("run error: %s", err.Error())
 		}
 	}()
 

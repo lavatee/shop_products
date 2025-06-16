@@ -5,12 +5,19 @@ orders:
 reviews:
   host: "localhost"
   port: "8003"
-saved:
+customers:
   host: "localhost"
   port: "8004"
 db:
   host: "localhost"
   port: "5432"
   username: "postgres"
-  dbname: "postgres"
+  dbname: "products"
   sslmode: "disable"
+redis:
+  host: "localhost"
+  port: "6379"
+rabbitmq:
+  host: "localhost"
+  port: "5672"
+  username: "guest"

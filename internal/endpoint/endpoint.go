@@ -5,14 +5,20 @@ import (
 	pb "github.com/lavatee/shop_protos/gen"
 )
 
+type MQConsumer interface {
+	ConsumeQueue(queue string, handler func([]byte) error) error
+}
+
 type Endpoint struct {
 	pb.UnimplementedProductsServer
 	Services *service.Service
+	Consumer MQConsumer
 }
 
-func NewEndpoint(services *service.Service) *Endpoint {
+func NewEndpoint(services *service.Service, consumer MQConsumer) *Endpoint {
 	return &Endpoint{
 		Services: services,
+		Consumer: consumer,
 	}
 }
 
